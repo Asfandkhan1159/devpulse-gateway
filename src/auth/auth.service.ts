@@ -1,3 +1,4 @@
+// src/auth/auth.service.ts
 import {  Injectable,UnauthorizedException } from '@nestjs/common';
 import { User } from './user.entity';
 import { Repository } from 'typeorm';
@@ -21,6 +22,7 @@ export class AuthService {
          
            throw new UnauthorizedException('Invalid email or password');
         }
+        console.log('Signing with secret:', process.env.JWT_SECRET || 'devsecret');
         const token = this.jwtService.sign({sub:user.id,email:user.email});
         return {access_token:token,message:'Login successful'};
        
