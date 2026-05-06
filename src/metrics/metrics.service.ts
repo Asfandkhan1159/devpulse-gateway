@@ -2,15 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { NotFoundException,InternalServerErrorException } from '@nestjs/common';
-
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class MetricsService {
    
-    constructor(private httpService:HttpService){}
+    constructor(private httpService:HttpService,private configService: ConfigService){}
     private async callFastAPI(endpoint: string, projectId: number, days: number) {
     try {
+        const baseUrl = this.configService.get('FASTAPI_URL');
         const response = await firstValueFrom(
-            this.httpService.get(`http://localhost:8000${endpoint}`, {
+            this.httpService.get(`${baseUrl}${endpoint}`, {
                 params: { project_id: projectId, days }
             })
         );
