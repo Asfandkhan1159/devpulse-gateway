@@ -34,4 +34,9 @@ getMeanTimeToRecovery(
     @Query('days') days:number
 ){
     return this.metricsService.getMeanTimeToRecovery(projectId,days);
-}}
+}
+@Get('projects')
+getProjects() {
+    return this.metricsService.getProjects();
+}
+}

@@ -7,6 +7,20 @@ import { ConfigService } from '@nestjs/config';
 export class MetricsService {
    
     constructor(private httpService:HttpService,private configService: ConfigService){}
+    private async callFastAPIRaw(endpoint:string){
+        try{
+            const baseUrl= this.configService.get('FASTAPI_URL');
+            const response = await firstValueFrom(
+                this.httpService.get(`${baseUrl}${endpoint}`)
+            );
+            return response.data;
+        }catch(error:any){
+            if(error.response?.status === 404){
+                throw new NotFoundException('Not found')
+            }
+            throw new InternalServerErrorException('failed to fetch data')
+        }
+    }
     private async callFastAPI(endpoint: string, projectId: number, days: number) {
     try {
         const baseUrl = this.configService.get('FASTAPI_URL');
@@ -23,6 +37,9 @@ export class MetricsService {
         throw new InternalServerErrorException('Failed to fetch metrics');
     }
 }
+    async getProjects(){
+        return this.callFastAPIRaw('/metrics/projects')
+    }
     async getDeploymentFrequency(projectId:number, days:number){
         return this.callFastAPI('/metrics/deployment-frequency',projectId,days)
     }

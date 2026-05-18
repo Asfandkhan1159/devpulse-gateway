@@ -6,13 +6,28 @@ import { MetricsModule } from './metrics/metrics.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './auth/user.entity';
-
+import * as Joi from 'joi';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
       cache: true,
+      validationSchema: Joi.object({
+        DB_HOST: Joi.string().required(),
+        DB_PORT: Joi.number().required(),
+        DB_USERNAME: Joi.string().required(),
+        DB_PASSWORD: Joi.string().required(),
+        DB_NAME: Joi.string().required(),
+        JWT_SECRET: Joi.string().required(),
+        FASTAPI_URL: Joi.string().required(),
+        GITLAB_CLIENT_ID: Joi.string().required(),
+        GITLAB_CLIENT_SECRET: Joi.string().required(),
+        GITLAB_CALLBACK_URL: Joi.string().required(),
+        GITHUB_CLIENT_ID: Joi.string().required(),
+        GITHUB_CLIENT_SECRET: Joi.string().required(),
+        GITHUB_CALLBACK_URL: Joi.string().required(),
+      }),
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',

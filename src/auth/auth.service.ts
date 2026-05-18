@@ -6,7 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { LoginDto } from './dto/login.dto';
 import  * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-
+import type { Response } from 'express';
 @Injectable()
 export class AuthService {
     constructor(
@@ -27,4 +27,35 @@ export class AuthService {
         return {access_token:token,message:'Login successful'};
        
     }
+    async validateOAuthUser(profile:{
+        email:string;
+        name:string;
+        provider:string;
+        providerId:string;
+    }){
+        let user = await this.userRepository.findOne({
+            where:{email:profile.email},
+        });
+        if(!user){
+            user= this.userRepository.create({
+                email:profile.email,
+                name:profile.name,
+                provider:profile.provider,
+                providerId:profile.providerId,
+                password:'',
+            })
+            await this.userRepository.save(user);
+        }
+        return user;
+    }
+    async issueJwtCookie(user: User, response: Response) {
+  const token = this.jwtService.sign({ sub: user.id, email: user.email });
+  response.cookie('access_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+  return token;
+}
 }
