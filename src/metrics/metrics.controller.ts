@@ -2,6 +2,7 @@
 import { Controller, Get, UseGuards,Query } from '@nestjs/common';
 import { MetricsService } from './metrics.service';
 import { AuthGuard } from '@nestjs/passport';
+import { number } from 'joi';
 
 @UseGuards((AuthGuard('jwt'))) // Add appropriate guards if needed
 @Controller('metrics')
@@ -39,4 +40,12 @@ getMeanTimeToRecovery(
 getProjects() {
     return this.metricsService.getProjects();
 }
+@Get('trends')
+getTrends(
+    @Query('project_id') projectId: number,
+    @Query('days') days: number,
+) {
+    return this.metricsService.getTrends(projectId, days);
+}
+
 }

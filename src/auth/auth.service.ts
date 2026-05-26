@@ -1,12 +1,13 @@
 // src/auth/auth.service.ts
-import {  Injectable,UnauthorizedException } from '@nestjs/common';
+import {  Injectable,InternalServerErrorException,UnauthorizedException } from '@nestjs/common';
 import { User } from './user.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LoginDto } from './dto/login.dto';
 import  * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import type { Response } from 'express';
+import { application, type Response } from 'express';
+import { json } from 'stream/consumers';
 @Injectable()
 export class AuthService {
     constructor(
@@ -32,6 +33,7 @@ export class AuthService {
         name:string;
         provider:string;
         providerId:string;
+        accessToken?:string;
     }){
         let user = await this.userRepository.findOne({
             where:{email:profile.email},
@@ -43,9 +45,13 @@ export class AuthService {
                 provider:profile.provider,
                 providerId:profile.providerId,
                 password:'',
+                githubAccessToken:profile.accessToken || null
             })
-            await this.userRepository.save(user);
+            
+        }else{
+            user.githubAccessToken = profile.accessToken || null
         }
+        await this.userRepository.save(user);
         return user;
     }
     async issueJwtCookie(user: User, response: Response) {
@@ -58,4 +64,56 @@ export class AuthService {
   });
   return token;
 }
+async getGithubRepos(userId: string) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user?.githubAccessToken) {
+        throw new UnauthorizedException('No GitHub token found');
+    }
+    const response = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
+        headers: {
+            Authorization: `Bearer ${user.githubAccessToken}`,
+            Accept: 'application/vnd.github.v3+json',
+        },
+    });
+    const repos = await response.json();
+    return repos.map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        full_name: r.full_name,
+        html_url: r.html_url,
+        private: r.private,
+    }));
+}
+async connectedGithubRepo(userId:string, repoFullName:string, webhookUrl:string){
+    const user = await this.userRepository.findOne({where:{id:userId}})
+    if(!user?.githubAccessToken){
+        throw new UnauthorizedException('No Github Token found')
+    }
+    const response = await fetch(`https://api.github.com/repos/${repoFullName}/hooks`,{
+        method:'POST',
+        headers:{
+            Authorization:`Bearer ${user.githubAccessToken}`,
+            Accept:'application/vnd.github.v3+json',
+            'Content-Type':'application/json'
+        },
+        body:JSON.stringify({
+            name:'web',
+            active:true,
+            events:['push', 'pull_request','workflow_run'],
+            config:{
+                url:webhookUrl,
+                content_type:'json',
+            },
+        }),
+    }); 
+    if(!response.ok){
+        const error = await response.json();
+        console.log('GitHub API error:', JSON.stringify(error));
+throw new InternalServerErrorException(error.message || 'Failed to register webhook');
+
+    }
+
+    return {message:`Webhook registered for ${repoFullName}`}
+}
+
 }

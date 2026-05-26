@@ -14,7 +14,7 @@ export class GitHubStrategy extends PassportStrategy(Strategy, 'github') {
     clientID: configService.get('GITHUB_CLIENT_ID')!,
     clientSecret: configService.get('GITHUB_CLIENT_SECRET')!,
     callbackURL: configService.get('GITHUB_CALLBACK_URL')!,
-    scope: ['user:email'],
+    scope: ['user:email','write:repo_hook', 'repo'],
 });
     }
 
@@ -23,11 +23,13 @@ export class GitHubStrategy extends PassportStrategy(Strategy, 'github') {
         refreshToken: string,
         profile: any,
     ) {
+     
         const user = await this.authService.validateOAuthUser({
             email: profile.emails[0].value,
             name: profile.displayName,
             provider: 'github',
             providerId: profile.id,
+            accessToken
         });
         return user;
     }

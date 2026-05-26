@@ -63,5 +63,17 @@ export class AuthController {
     res.redirect('http://localhost:5173/projects')
   }
 
+  @Get('github/repos')
+  @UseGuards(AuthGuard('jwt'))
+  getGithubRepos(@Req() req) {
+    return this.authService.getGithubRepos(req.user.userId);
+}
+
+@Post('github/connect-repo')
+@UseGuards(AuthGuard('jwt'))
+connectRepo(@Req() req, @Body() body:{repoFullName:string, webhookUrl:string}){
+return this.authService.connectedGithubRepo(req.user.userId, body.repoFullName, body.webhookUrl)
+}
+
   
 }

@@ -53,4 +53,7 @@ export class MetricsService {
     async getMeanTimeToRecovery(projectId:number, days:number){
        return this.callFastAPI('/metrics/mean-time-to-recovery',projectId,days)
     }
+    async getTrends(projectId:number, days:number){
+        return this.callFastAPI('/metrics/trends', projectId,days)
+    }
 }

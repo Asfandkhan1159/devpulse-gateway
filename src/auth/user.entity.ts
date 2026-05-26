@@ -17,5 +17,7 @@ export class User{
     providerId!:string;
     @CreateDateColumn()
     createdAt!:Date;
+    @Column({ nullable: true, type: 'varchar' })
+    githubAccessToken!: string | null;
     
 }
