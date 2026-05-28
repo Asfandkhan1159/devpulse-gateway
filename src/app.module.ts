@@ -6,6 +6,7 @@ import { MetricsModule } from './metrics/metrics.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './auth/user.entity';
+import { ConnectedRepository } from './auth/connected-repository.entity';
 import * as Joi from 'joi';
 @Module({
   imports: [
@@ -36,7 +37,7 @@ import * as Joi from 'joi';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [User],
+      entities: [User,ConnectedRepository],
       synchronize: true,
     }),
     AuthModule,

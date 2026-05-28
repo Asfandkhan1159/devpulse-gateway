@@ -1,13 +1,18 @@
 // src/metrics/metrics.controller.ts
-import { Controller, Get, UseGuards,Query } from '@nestjs/common';
+import { Controller, Get, UseGuards,Query,Req } from '@nestjs/common';
 import { MetricsService } from './metrics.service';
+import { AuthService } from 'src/auth/auth.service';
 import { AuthGuard } from '@nestjs/passport';
-import { number } from 'joi';
+import type { Request } from 'express';
+
 
 @UseGuards((AuthGuard('jwt'))) // Add appropriate guards if needed
 @Controller('metrics')
 export class MetricsController {
- constructor(private metricsService:MetricsService){}
+ constructor(
+    private metricsService:MetricsService,
+    private authService:AuthService
+){}
 @Get('deployment-frequency')
 getDeploymentFrequency(
     @Query('project_id') projectId:number,
@@ -36,10 +41,19 @@ getMeanTimeToRecovery(
 ){
     return this.metricsService.getMeanTimeToRecovery(projectId,days);
 }
-@Get('projects')
-getProjects() {
-    return this.metricsService.getProjects();
-}
+ @Get('projects')
+    async getProjects(@Req() req: Request) {
+        const userId = (req.user as any).userId
+        const [connectedRepos, allProjects] = await Promise.all([
+            this.authService.getConnectedRepos(userId),
+            this.metricsService.getAllProjects(),
+        ])
+        return allProjects.filter((p: any) =>
+            connectedRepos.some(
+                r => r.externalRepoId === String(p.external_id) 
+            )
+        )
+    }
 @Get('trends')
 getTrends(
     @Query('project_id') projectId: number,

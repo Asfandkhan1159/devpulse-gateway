@@ -71,9 +71,13 @@ export class AuthController {
 
 @Post('github/connect-repo')
 @UseGuards(AuthGuard('jwt'))
-connectRepo(@Req() req, @Body() body:{repoFullName:string, webhookUrl:string}){
-return this.authService.connectedGithubRepo(req.user.userId, body.repoFullName, body.webhookUrl)
+connectRepo(@Req() req, @Body() body:{repoFullName:string, webhookUrl:string,repoId:number}){
+return this.authService.connectedGithubRepo(req.user.userId, body.repoFullName, body.webhookUrl, body.repoId)
 }
 
-  
+@Get('connected-repos')
+@UseGuards(AuthGuard('jwt'))
+getConnectedRepos(@Req() req){
+  return this.authService.getConnectedRepos(req.user.userId);
+} 
 }

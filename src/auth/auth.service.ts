@@ -8,11 +8,14 @@ import  * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { application, type Response } from 'express';
 import { json } from 'stream/consumers';
+import { ConnectedRepository } from './connected-repository.entity';
 @Injectable()
 export class AuthService {
     constructor(
         @InjectRepository(User)
         private userRepository: Repository<User>,
+        @InjectRepository(ConnectedRepository)
+        private connectedRepoRepo:Repository<ConnectedRepository>,
         private jwtService: JwtService
         ) {}
     async login (LoginDto:LoginDto){
@@ -84,7 +87,7 @@ async getGithubRepos(userId: string) {
         private: r.private,
     }));
 }
-async connectedGithubRepo(userId:string, repoFullName:string, webhookUrl:string){
+async connectedGithubRepo(userId:string, repoFullName:string, webhookUrl:string, repoId:number){
     const user = await this.userRepository.findOne({where:{id:userId}})
     if(!user?.githubAccessToken){
         throw new UnauthorizedException('No Github Token found')
@@ -109,11 +112,27 @@ async connectedGithubRepo(userId:string, repoFullName:string, webhookUrl:string)
     if(!response.ok){
         const error = await response.json();
         console.log('GitHub API error:', JSON.stringify(error));
-throw new InternalServerErrorException(error.message || 'Failed to register webhook');
+        throw new InternalServerErrorException(error.message || 'Failed to register webhook');
 
     }
+    const webhookData = await response.json();
+    const [,repoName]= repoFullName.split('/');
+
+    const connectedRepo = this.connectedRepoRepo.create({
+        userId,
+        provider:'github',
+        externalRepoId:String(repoId),
+        repoName,
+        webhookId:String(webhookData.id),
+        webUrl:`https://github.com/${repoFullName}`,
+
+
+    });
+    await this.connectedRepoRepo.save(connectedRepo);
 
     return {message:`Webhook registered for ${repoFullName}`}
 }
-
+async getConnectedRepos(userId:string){
+    return this.connectedRepoRepo.find({where:{userId}});
+}
 }

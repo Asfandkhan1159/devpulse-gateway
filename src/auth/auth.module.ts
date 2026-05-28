@@ -9,8 +9,9 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GitHubStrategy } from './github.strategy';
 import { GitlabStrategy } from './gitlab.strategy';
+import { ConnectedRepository } from './connected-repository.entity';
 @Module({
-  imports: [TypeOrmModule.forFeature([User]),
+  imports: [TypeOrmModule.forFeature([User,ConnectedRepository]),
   PassportModule,
   JwtModule.registerAsync({
   imports: [ConfigModule],

@@ -37,7 +37,7 @@ export class MetricsService {
         throw new InternalServerErrorException('Failed to fetch metrics');
     }
 }
-    async getProjects(){
+    async getAllProjects(){
         return this.callFastAPIRaw('/metrics/projects')
     }
     async getDeploymentFrequency(projectId:number, days:number){
