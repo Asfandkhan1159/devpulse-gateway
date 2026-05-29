@@ -1,5 +1,5 @@
 // src/auth/auth.service.ts
-import {  Injectable,InternalServerErrorException,UnauthorizedException } from '@nestjs/common';
+import {  Injectable,InternalServerErrorException,UnauthorizedException, ConflictException } from '@nestjs/common';
 import { User } from './user.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -116,6 +116,12 @@ async connectedGithubRepo(userId:string, repoFullName:string, webhookUrl:string,
     if(!response.ok){
         const error = await response.json();
         console.log('GitHub API error:', JSON.stringify(error));
+        const isHookExists = error.errors?.[0].message === 'Hook already exists on this repository'
+
+        if(isHookExists){
+            throw new ConflictException('Repository already connected')
+        }
+
         throw new InternalServerErrorException(error.message || 'Failed to register webhook');
 
     }
