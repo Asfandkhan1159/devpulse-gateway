@@ -28,6 +28,7 @@ import * as Joi from 'joi';
         GITHUB_CLIENT_ID: Joi.string().required(),
         GITHUB_CLIENT_SECRET: Joi.string().required(),
         GITHUB_CALLBACK_URL: Joi.string().required(),
+        GITLAB_TOKEN: Joi.string().required(),
       }),
     }),
     TypeOrmModule.forRoot({

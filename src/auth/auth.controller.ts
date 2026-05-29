@@ -75,6 +75,17 @@ connectRepo(@Req() req, @Body() body:{repoFullName:string, webhookUrl:string,rep
 return this.authService.connectedGithubRepo(req.user.userId, body.repoFullName, body.webhookUrl, body.repoId)
 }
 
+@Get('gitlab/repos')
+@UseGuards(AuthGuard('jwt'))
+getGitlabRepos(@Req() req){
+  return this.authService.getGitlabRepos(req.user.userId);
+
+}
+@Post('gitlab/connect-repo')
+@UseGuards(AuthGuard('jwt'))
+connectGitlabRepo(@Req() req,@Body () body:{repoFullName:string, webhookUrl:string, repoId:number}){
+  return this.authService.connectedGitLabRepo(req.user.userId, body.repoFullName, body.webhookUrl, body.repoId)
+}
 @Get('connected-repos')
 @UseGuards(AuthGuard('jwt'))
 getConnectedRepos(@Req() req){

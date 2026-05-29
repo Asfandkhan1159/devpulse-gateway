@@ -27,6 +27,7 @@ export class GitlabStrategy extends PassportStrategy(Strategy,'gitlab'){
         name: profile.displayName,
         provider: 'gitlab',
         providerId: String(profile.id),
+        accessToken
     });
     return user;
 }

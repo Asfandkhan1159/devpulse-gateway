@@ -19,5 +19,7 @@ export class User{
     createdAt!:Date;
     @Column({ nullable: true, type: 'varchar' })
     githubAccessToken!: string | null;
+    @Column({nullable:true,type:'varchar'})
+    gitlabAccessToken!:string | null;
     
 }
