@@ -108,7 +108,10 @@ async getGitlabRepos(userId:string){
             Accept:'application/vnd/gitlab.v3+json'
         }
     })
+    console.log('GitLab API status:', response.status)
+    const text = await response.text()
     const repos =await response.json();
+    console.log('GitLab API response:', text)
 
     return repos.map((r:any)=>({
         id:r.id,
