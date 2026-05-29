@@ -48,6 +48,7 @@ getMeanTimeToRecovery(
             this.authService.getConnectedRepos(userId),
             this.metricsService.getAllProjects(),
         ])
+        
         return allProjects.filter((p: any) =>
             connectedRepos.some(
                 r => r.externalRepoId === String(p.external_id) 

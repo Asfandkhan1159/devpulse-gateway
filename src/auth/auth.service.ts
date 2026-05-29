@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { application, type Response } from 'express';
 import { json } from 'stream/consumers';
 import { ConnectedRepository } from './connected-repository.entity';
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class AuthService {
     constructor(
@@ -16,7 +17,8 @@ export class AuthService {
         private userRepository: Repository<User>,
         @InjectRepository(ConnectedRepository)
         private connectedRepoRepo:Repository<ConnectedRepository>,
-        private jwtService: JwtService
+        private jwtService: JwtService,
+        private configService : ConfigService
         ) {}
     async login (LoginDto:LoginDto){
         const {email,password}= LoginDto;
@@ -78,7 +80,9 @@ async getGithubRepos(userId: string) {
             Accept: 'application/vnd.github.v3+json',
         },
     });
+   
     const repos = await response.json();
+    
     return repos.map((r: any) => ({
         id: r.id,
         name: r.name,
@@ -129,6 +133,23 @@ async connectedGithubRepo(userId:string, repoFullName:string, webhookUrl:string,
 
     });
     await this.connectedRepoRepo.save(connectedRepo);
+    const fastApiUrl = this.configService.get('FASTAPI_URL');
+console.log('fastApiUrl:', fastApiUrl);
+const projectRes = await fetch(`${fastApiUrl}/metrics/projects`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        external_id: String(repoId),
+        provider: 'github',
+        name: repoName,
+        web_url: `https://github.com/${repoFullName}`
+    })
+});
+console.log('FastAPI project create status:', projectRes.status);
+const projectResBody = await projectRes.json();
+console.log('FastAPI project create response:', projectResBody);
+    console.log('FastAPI project create status:', projectRes.status);
+
 
     return {message:`Webhook registered for ${repoFullName}`}
 }
