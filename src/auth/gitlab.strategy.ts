@@ -14,7 +14,7 @@ export class GitlabStrategy extends PassportStrategy(Strategy,'gitlab'){
             clientID:configService.get('GITLAB_CLIENT_ID'),
             clientSecret:configService.get('GITLAB_CLIENT_SECRET'),
             callbackURL:configService.get('GITLAB_CALLBACK_URL'),
-            scope:['read_user'],
+            scope:['api'],
         });
     }
   async validate(
