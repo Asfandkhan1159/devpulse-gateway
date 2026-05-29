@@ -47,7 +47,7 @@ export class AuthController {
   @UseGuards(AuthGuard('gitlab'))
   async gitlabCallbacl(@Req() req,@Res({passthrough:true}) res:Response){
     const token = await this.authService.issueJwtCookie(req.user,res);
-    res.redirect('http://localhost:5173/projects')
+    res.redirect(`${process.env.FRONTEND_URL}/projects`)
   }
   @Get('github')
   @UseGuards(AuthGuard('github'))
@@ -60,7 +60,7 @@ export class AuthController {
   @UseGuards(AuthGuard('github'))
   async githubCallback(@Req() req, @Res({passthrough:true}) res:Response){
     const token = await this.authService.issueJwtCookie(req.user, res);
-    res.redirect('http://localhost:5173/projects')
+    res.redirect(`${process.env.FRONTEND_URL}/projects`)
   }
 
   @Get('github/repos')
