@@ -39,7 +39,7 @@ import * as Joi from 'joi';
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   entities: [User, ConnectedRepository],
-  synchronize: process.env.NODE_ENV !== 'production',
+  synchronize: true,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 }),
     AuthModule,
