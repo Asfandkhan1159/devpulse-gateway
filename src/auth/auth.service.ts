@@ -102,24 +102,22 @@ async getGitlabRepos(userId:string){
     throw new UnauthorizedException('No Gitlab token found');
     }
 
-    const response = await fetch('https://gitlab.com/api/v4/projects?membership=true&per_page=100',{
-        headers:{
-            Authorization:`Bearer ${user.gitlabAccessToken}`,
-            Accept:'application/vnd/gitlab.v3+json'
-        }
-    })
-    console.log('GitLab API status:', response.status)
-    const text = await response.text()
-    const repos =await response.json();
-    console.log('GitLab API response:', text)
-
-    return repos.map((r:any)=>({
-        id:r.id,
-        name:r.name,
-        full_name:r.path_with_namespace,
-        html_url:r.web_url,
-        private:r.visibility === 'private'
-    }))
+    const response = await fetch('https://gitlab.com/api/v4/projects?membership=true&per_page=100', {
+    headers: {
+        Authorization: `Bearer ${user.gitlabAccessToken}`,
+    }
+})
+console.log('GitLab API status:', response.status)
+const text = await response.text()
+console.log('GitLab API response:', text.substring(0, 200))
+const repos = JSON.parse(text)
+return repos.map((r: any) => ({
+    id: r.id,
+    name: r.name,
+    full_name: r.path_with_namespace,
+    html_url: r.web_url,
+    private: r.visibility === 'private',
+}))
 }
 async connectedGithubRepo(userId:string, repoFullName:string, webhookUrl:string, repoId:number){
     const user = await this.userRepository.findOne({where:{id:userId}})
