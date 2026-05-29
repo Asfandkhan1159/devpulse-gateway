@@ -64,7 +64,7 @@ export class AuthService {
         return user;
     }
     async issueJwtCookie(user: User, response: Response) {
-  const token = this.jwtService.sign({ sub: user.id, email: user.email });
+  const token = this.jwtService.sign({ sub: user.id, email: user.email,provider: user.provider });
   response.cookie('access_token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
