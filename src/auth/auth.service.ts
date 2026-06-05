@@ -154,7 +154,8 @@ async connectedGithubRepo(userId:string, repoFullName:string, webhookUrl:string,
 
     }
     const webhookData = await response.json();
-    const [,repoName]= repoFullName.split('/');
+    console.log('repoFullName',repoFullName)
+    const [owner,repoName]= repoFullName.split('/');
 
     const connectedRepo = this.connectedRepoRepo.create({
         userId,
@@ -168,7 +169,7 @@ async connectedGithubRepo(userId:string, repoFullName:string, webhookUrl:string,
     });
     await this.connectedRepoRepo.save(connectedRepo);
     const fastApiUrl = this.configService.get('FASTAPI_URL');
-console.log('fastApiUrl:', fastApiUrl);
+;
 const projectRes = await fetch(`${fastApiUrl}/metrics/projects`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -179,10 +180,27 @@ const projectRes = await fetch(`${fastApiUrl}/metrics/projects`, {
         web_url: `https://github.com/${repoFullName}`
     })
 });
-console.log('FastAPI project create status:', projectRes.status);
+
+
+
 const projectResBody = await projectRes.json();
 console.log('FastAPI project create response:', projectResBody);
     console.log('FastAPI project create status:', projectRes.status);
+
+    const fullHistoricalBackfill = await fetch(`${fastApiUrl}/events/backfill`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+        project_id:projectResBody.id,
+        repo_name:repoName,
+        owner:owner,
+        access_token:user.githubAccessToken,
+        provider:'github'
+
+
+    })
+})
+console.log('Backfill status:', fullHistoricalBackfill.status);
 
 
     return {message:`Webhook registered for ${repoFullName}`}
@@ -245,4 +263,7 @@ return { message: `Webhook registered for ${repoFullname}` };
 async getConnectedRepos(userId:string){
     return this.connectedRepoRepo.find({where:{userId}});
 }
+
 }
+
+

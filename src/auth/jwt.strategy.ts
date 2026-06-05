@@ -5,19 +5,20 @@ import { ExtractJwt, Strategy } from "passport-jwt";
 import { Request } from "express";
 
 @Injectable()
-export class JwtStrategy  extends PassportStrategy(Strategy) {
+export class JwtStrategy extends PassportStrategy(Strategy) {
     constructor(){
-      
+        if(!process.env.JWT_SECRET) throw new Error('JWT_SECRET not defined')
+        
         super({
-            jwtFromRequest:(req:Request) =>{
+            jwtFromRequest: (req: Request) => {
                 return req?.cookies?.access_token || null;
             },
-            secretOrKey:process.env.JWT_SECRET || 'devsecret',
-             passReqToCallback: false,
-        })
+            secretOrKey: process.env.JWT_SECRET,
+            passReqToCallback: false,
+        });
     }
-    async validate(payload:any){
 
-        return {userId:payload.sub, email:payload.email,provider:payload.provider};
+    async validate(payload: any){
+        return { userId: payload.sub, email: payload.email, provider: payload.provider };
     }
 }
