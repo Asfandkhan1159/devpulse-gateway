@@ -187,7 +187,7 @@ const projectResBody = await projectRes.json();
 console.log('FastAPI project create response:', projectResBody);
     console.log('FastAPI project create status:', projectRes.status);
 
-    const fullHistoricalBackfill = await fetch(`${fastApiUrl}/events/backfill`,{
+    const fullHistoricalBackfill = await fetch(`${fastApiUrl}/metrics/events/backfill`,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
