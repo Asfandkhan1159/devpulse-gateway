@@ -7,7 +7,7 @@ import { LoginDto } from './dto/login.dto';
 import  * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { application, type Response } from 'express';
-import { json } from 'stream/consumers';
+
 import { ConnectedRepository } from './connected-repository.entity';
 import { ConfigService } from '@nestjs/config';
 @Injectable()
@@ -141,19 +141,35 @@ async connectedGithubRepo(userId:string, repoFullName:string, webhookUrl:string,
             },
         }),
     }); 
+    let webhookData : any ;
     if(!response.ok){
         const error = await response.json();
         console.log('GitHub API error:', JSON.stringify(error));
         const isHookExists = error.errors?.[0].message === 'Hook already exists on this repository'
 
         if(isHookExists){
-            throw new ConflictException('Repository already connected')
+            const results = await fetch(`https://api.github.com/repos/${repoFullName}/hooks`,{
+                method:'GET',
+                headers:{
+                    Authorization:`Bearer ${user.githubAccessToken}`,
+                    Accept:'application/vnd.github.v3+json',
+                    'Content-Type':'application/json'
+                }
+            })
+
+            const hooksData =  await results.json()
+            const devpulseHook = hooksData.find((hook: any) => hook.config.url === 'https://devpulse-analytics.onrender.com/webhooks/github')
+          
+            webhookData= {id:devpulseHook.id}
+        }else{
+             throw new InternalServerErrorException(error.message || 'Failed to register webhook');
         }
+       
 
-        throw new InternalServerErrorException(error.message || 'Failed to register webhook');
-
+    }else{
+        webhookData = await response.json();    
     }
-    const webhookData = await response.json();
+     
     console.log('repoFullName',repoFullName)
     const [owner,repoName]= repoFullName.split('/');
 
