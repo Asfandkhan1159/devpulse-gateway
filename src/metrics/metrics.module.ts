@@ -5,9 +5,14 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthModule } from 'src/auth/auth.module';
 import { HttpModule } from '@nestjs/axios';
 
+
+
+
 @Module({
+  imports: [
+PassportModule, AuthModule,HttpModule,],
   controllers: [MetricsController],
   providers: [MetricsService],
-  imports: [PassportModule, AuthModule,HttpModule],
+
 })
 export class MetricsModule {}

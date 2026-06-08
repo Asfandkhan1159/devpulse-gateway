@@ -6,6 +6,7 @@ import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 
 
+
 @UseGuards((AuthGuard('jwt'))) // Add appropriate guards if needed
 @Controller('metrics')
 export class MetricsController {
@@ -14,36 +15,46 @@ export class MetricsController {
     private authService:AuthService
 ){}
 @Get('deployment-frequency')
-getDeploymentFrequency(
+async getDeploymentFrequency(
     @Query('project_id') projectId:number,
-    @Query('days') days:number
+    @Query('days') days:number,
+    @Req() req:Request
 ){
-    return this.metricsService.getDeploymentFrequency(projectId,days);
+    const userId =  (req.user as any).userId
+    return this.metricsService.getDeploymentFrequency(projectId,days,userId);
 }
 @Get('lead-time')
-getLeadTimeforChanges(
+async getLeadTimeforChanges(
     @Query('project_id') projectId:number,
-    @Query('days') days:number
+    @Query('days') days:number,
+    @Req() req:Request
+
 ){
-    return this.metricsService.getLeadTimeforChanges(projectId,days);
+    const userId =  (req.user as any).userId
+    return this.metricsService.getLeadTimeforChanges(projectId,days, userId);
 }
 @Get('change-failure-rate')
-getChangeFailureRate(
+async getChangeFailureRate(
     @Query('project_id') projectId:number,
-    @Query('days') days:number
+    @Query('days') days:number,
+    @Req() req:Request
 ){
-    return this.metricsService.getChangeFailureRate(projectId,days);
+    const userId =  (req.user as any).userId
+    return this.metricsService.getChangeFailureRate(projectId,days,userId);
 }
 @Get('mean-time-to-recovery')
-getMeanTimeToRecovery(
+async getMeanTimeToRecovery(
     @Query('project_id') projectId:number,
-    @Query('days') days:number
+    @Query('days') days:number,
+    @Req() req:Request
 ){
-    return this.metricsService.getMeanTimeToRecovery(projectId,days);
+    const userId =  (req.user as any).userId
+    return this.metricsService.getMeanTimeToRecovery(projectId,days,userId);
 }
  @Get('projects')
     async getProjects(@Req() req: Request) {
         const userId = (req.user as any).userId
+        
         const [connectedRepos, allProjects] = await Promise.all([
             this.authService.getConnectedRepos(userId),
             this.metricsService.getAllProjects(),
@@ -56,11 +67,13 @@ getMeanTimeToRecovery(
         )
     }
 @Get('trends')
-getTrends(
+async getTrends(
     @Query('project_id') projectId: number,
     @Query('days') days: number,
+    @Req() req:Request
 ) {
-    return this.metricsService.getTrends(projectId, days);
+    const userId = (req.user as any).userId
+    return this.metricsService.getTrends(projectId, days,userId);
 }
 
 }

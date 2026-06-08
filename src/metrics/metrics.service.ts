@@ -1,12 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable,ForbiddenException  } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { NotFoundException,InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+
+import { AuthService } from 'src/auth/auth.service';
+
 @Injectable()
 export class MetricsService {
    
-    constructor(private httpService:HttpService,private configService: ConfigService){}
+    constructor(private httpService:HttpService,
+         
+         
+         
+         
+         private configService: ConfigService,
+         private authService:AuthService
+         
+        )
+         
+         {}
+         
     private async callFastAPIRaw(endpoint:string){
         try{
             const baseUrl= this.configService.get('FASTAPI_URL');
@@ -37,23 +51,48 @@ export class MetricsService {
         throw new InternalServerErrorException('Failed to fetch metrics');
     }
 }
-    async getAllProjects(){
+    private async checkOwnerShip(userId: string, projectId: number) {
+    const projects = await this.getAllProjects();
+    const project = projects.find((p: any) => p.id === Number(projectId));
+ 
+    if (!project) throw new NotFoundException('Project not found');
+    const connectedRepos = await this.authService.getConnectedRepos(userId);
+
+    
+    const owned = connectedRepos.find(
+        (r: any) => r.externalRepoId === project.external_id.toString()
+    );
+
+    if (!owned) throw new ForbiddenException('No ownership found for this project');
+}
+   async getAllProjects(){
         return this.callFastAPIRaw('/metrics/projects')
+        
+        
     }
-    async getDeploymentFrequency(projectId:number, days:number){
+    
+    async getDeploymentFrequency(projectId:number, days:number, userId){
+       await this.checkOwnerShip(userId, projectId)
+        
         return this.callFastAPI('/metrics/deployment-frequency',projectId,days)
     }
-    async getLeadTimeforChanges(projectId:number, days:number){
+    async getLeadTimeforChanges(projectId:number, days:number, userId){
+        await this.checkOwnerShip(userId,projectId)
         return this.callFastAPI('/metrics/lead-time',projectId,days)
     }
-    async getChangeFailureRate(projectId:number, days:number){
+    async getChangeFailureRate(projectId:number, days:number, userId){
+        await this.checkOwnerShip(userId,projectId)
         return this.callFastAPI('/metrics/change-failure-rate',projectId,days)
     }
 
-    async getMeanTimeToRecovery(projectId:number, days:number){
+    async getMeanTimeToRecovery(projectId:number, days:number,userId){
+        await this.checkOwnerShip(userId,projectId)
        return this.callFastAPI('/metrics/mean-time-to-recovery',projectId,days)
     }
-    async getTrends(projectId:number, days:number){
+    async getTrends(projectId:number, days:number, userId){
+        await this.checkOwnerShip(userId,projectId)
         return this.callFastAPI('/metrics/trends', projectId,days)
     }
+    
+
 }
