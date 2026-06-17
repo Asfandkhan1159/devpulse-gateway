@@ -10,6 +10,7 @@ import { application, type Response } from 'express';
 
 import { ConnectedRepository } from './connected-repository.entity';
 import { ConfigService } from '@nestjs/config';
+import { access } from 'fs';
 @Injectable()
 export class AuthService {
     constructor(
@@ -242,15 +243,33 @@ async connectedGitLabRepo(userId:string, repoFullname:string, webhookUrl:string,
 
         })
     })
+     let webhookData : any ;
     if(!response.ok){
         const error = await response.json();
         console.log('GitLab API error:',JSON.stringify(error));
-        if (response.status === 422) {
-    throw new ConflictException('Repository already connected');
+        const isHookExist = response.status === 422
+        if(isHookExist){
+            const results = await fetch(`https://gitlab.com/api/v4/projects/${repoId}/hooks`,{
+                method:'Get',
+                headers:{
+                    Authorization:`Bearer ${user.gitlabAccessToken}`,
+                    Accept:'application/vnd.gitlab.v4+json',
+                    'Content-Type': 'application/json'
+                }
+            })
+             const hooksData = await results.json()
+             const devpulseHook = hooksData.find((hook: any) => hook.url === webhookUrl)
+
+             webhookData = {id:devpulseHook.id}
+        }else{
+            throw new InternalServerErrorException(error.message || 'Failed to register webhook')
+        }
+       
+       
+    }else{
+         webhookData = await response.json(); 
     }
-        throw new InternalServerErrorException(error.message || "failed to register gitlab webhook")
-    }
-    const webhookData = await response.json();
+   
     const [,repoName]= repoFullname.split('/');
     const ConnectedRepository = this.connectedRepoRepo.create({
         userId,
@@ -273,6 +292,32 @@ await fetch(`${fastApiUrl}/metrics/projects`, {
         web_url: `https://gitlab.com/${repoFullname}`
     })
 });
+const projectRes = await fetch(`${fastApiUrl}/metrics/projects`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        external_id: String(repoId),
+        provider: 'gitlab',
+        name: repoName,
+        web_url: `https://gitlab.com/${repoFullname}`
+    })
+});
+
+const projectResBody = await projectRes.json();
+
+const backfillRes = await fetch(`${fastApiUrl}/metrics/events/backfill`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+        project_id:projectResBody.id,
+        repo_name:repoName,
+        owner:repoFullname.split('/')[0],
+        provider:'gitlab',
+        access_token:user.gitlabAccessToken,
+        gitlab_project_id:String(repoId)
+    })
+})
+console.log('Gitlab backfill status',backfillRes.status)
 
 return { message: `Webhook registered for ${repoFullname}` };
 }
